@@ -29,7 +29,11 @@
         <section data-background="assets/hack_your_career-dim.png" data-state="dim-animation" data-background-transition="none">
             <h1>Asynchronous Patterns in JavaScript</h1>
             <p>by Tomasz Smelcerz, 2016</p>
-            <p>https://github.com/Tomasz-Smelcerz/async-patterns-with-js.git</p>
+            <div>
+              <small>
+                <a href="https://github.com/Tomasz-Smelcerz/async-patterns-with-js.git">https://github.com/Tomasz-Smelcerz/async-patterns-with-js.git</a>
+              </small>
+            </div>
             <small><a href="tsmelcerz@gmail.com">tsmelcerz@gmail.com</a></small>
         </section>
         <section>
@@ -50,6 +54,7 @@
           </section>
           <section>
             <h3>Functional?</h3>
+            <div>&nbsp;</div>
             <ul>
               <li>Functional roots: <strong style="color:LightSkyBlue">Function</strong> is a first class object in JS</li>
               <li>You can easily leverage many functional patterns</li>
@@ -58,8 +63,9 @@
           </section>
           <section>
             <h3>Reactive?</h3>
+            <div>&nbsp;</div>
             <ul>
-              <li>We build Reactive systems because they <strong>scale better</strong></li>
+              <li>We build Reactive systems because they <strong style="color:LightSkyBlue">scale better</strong></li>
               <li><strong style="color:LightSkyBlue">Node.js</strong> provides a scalable server-side environment for JS code</li>
               <li>A serious competitor for established platforms (JVM, .NET, others)</li>
               <li>Driven by the mighty <strong style="color:LightSkyBlue">Event Loop</strong> - an execution model for processing asynchronous events</li>
@@ -67,11 +73,12 @@
           </section>
           <section>
             <h3>Event Loop</h3>
+            <div>&nbsp;</div>
             <ul>
-              <li>Executes Handlers registered by our code</li>
-              <li>Provides single-threaded processing model</li>
-              <li>Uses non-blocking API to perform time-consuming operations (I/O, scheduling)</li>
-              <li>Is an example of Reactive design: responsive*, elastic, message-driven <small>(* if not blocked)</small></li>
+              <li>Executes <strong style="color:LightSkyBlue">Handlers (callbacks)</strong> registered by our code</li>
+              <li>Provides <strong style="color:LightSkyBlue">single-threaded</strong> processing model</li>
+              <li>Uses <strong style="color:LightSkyBlue">non-blocking API</strong> to perform time-consuming operations (I/O, scheduling)</li>
+              <li>Is an example of Reactive design: <strong style="color:LightSkyBlue">responsive*</strong> , <strong style="color:LightSkyBlue">elastic</strong> , <strong style="color:LightSkyBlue">message-driven</strong> <small>(* if not blocked)</small></li>
             </ul>
           </section>
         </section>
@@ -85,7 +92,7 @@
             <ul>
               <li>There's a <strong style="color:LightSkyBlue">REST API</strong> of a blog platform. Imagine you want to fetch 5 recent entries of your favourite blogger.</li>
               <li>The <strong style="color:LightSkyBlue">search</strong> endpoint returns only IDs, blog entries have to be fetched one by one using IDs found.</li>
-              <li>Additional restriction: We will make requests one after another.</li>
+              <li>Additional restriction: We will make requests <strong style="color:LightSkyBlue">one after another</strong>.</li>
             </ul>
           </section>
           <section>
@@ -122,12 +129,12 @@ request('http://www.google.com', callback); //1
 console.log('Is the HTML ready?'); //2
             </code></pre>
             <pre class="fragment"><code class="javascript" data-trim data-noescape>       
-function callback(error, response) {
-    if(error) {
+function callback(error, response) { //3
+    if(error) {                      //4
         return handleError(error);
     }
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 200) {//5
         process(response) // Process the HTML
     }
 };
@@ -157,17 +164,17 @@ const request = require('request');
 const searchUrl = 'http://acmeblog.org/search/...';
 
 //request #1 (search)
-request(searchUrl, function (error, response) {
+request(searchUrl, function (error, response) {//cb#1
     const IDs = extractIDs(response);
     const entries = [];
     const blogUrl = 'http://acmeblog.org/goodblogger/';
 
     //request #2 (first blog entry)
-    request(blogUrl + IDs[0], function (error, response) {
+    request(blogUrl + IDs[0], function (error, response) {//cb#2
         entries.push(extractEntry(response));
 
         //request #3 (second blog entry)
-        request(blogUrl + IDs[1], function (error, response) {
+        request(blogUrl + IDs[1], function (error, response) {//cb#3
             entries.push(extractEntry(response));
             </code></pre>
           </section>
@@ -205,7 +212,7 @@ request(searchUrl, function (error, response) { //1
             </small></pre>
             <span class="fragment">
               <div>What we've endend with is called</div>
-              <div><strong>Pyramid of Doom / Callback Hell</strong></div>
+              <div><strong style="color:LightSkyBlue">Pyramid of Doom</strong> / <strong style="color:LightSkyBlue">Callback Hell</strong></div>
             </span>
           </section>
           <section>
@@ -226,7 +233,7 @@ request(searchUrl, function (error, response) { //1
           </section>
           <section>
             <h3>The problem, revisited</h3>
-            <div >What if we try more <i>functional</i> approach?</div>
+            <div >What if we try more <strong style="color:LightSkyBlue">functional</strong> approach?</div>
             <pre><code class="javascript" data-trim data-noescape>       
 const magicLib = require('magicLib'); //1
 
@@ -330,8 +337,8 @@ async.waterfall(steps); //2
             <h3>What is a <strong style="color:LightSkyBlue">Promise</strong>?</h3>
             </br>
             <ul>
-              <li>Similar to Scala's Future</li>
-              <li>A container for a value which may be available now or sometime in the future</li>
+              <li>Similar to Scala's <strong style="color:LightSkyBlue">Future</strong></li>
+              <li>A container for a value which may be available <strong style="color:LightSkyBlue">now</strong> or sometime <strong style="color:LightSkyBlue">in the future</strong></li>
             </ul>
           </section>
           <section>
@@ -360,7 +367,7 @@ async.waterfall(steps); //2
               <li>You can chain them using <strong style="color:LightSkyBlue">then()</strong> method</li>
               <ul>
                 <li><strong style="color:LightSkyBlue">then(func)</strong> takes the result of a promise and invokes passed <strong>func</strong> with the result.</li>
-                <li>Whatever is returned by the <strong>func</strong> passed into <strong style="color:LightSkyBlue">then</strong>, is returned as a new Promise. You can also return new Promise to defer the execution further.</li>
+                <li>Whatever is returned by the <strong>func</strong> passed into <strong style="color:LightSkyBlue">then</strong>, is returned as a new <strong style="color:LightSkyBlue">Promise</strong>. You can also return another <strong style="color:LightSkyBlue">Promise</strong> object to defer the execution further.</li>
               </ul>
               <li>Error handling is provided by <strong style="color:LightSkyBlue">catch()</strong> method</li>
             </ul>
@@ -417,10 +424,10 @@ function getEntry(id) {
             <h3>Things we've learned so far</h3>
             <div>&nbsp;</div>
             <ul>
-              <li>JavaScript is not considered the <strong>most</strong> Functional Programming Language in use</li>
-              <li>But there's no universally aggreed-upon definition of which language is...</li>
-              <li>Functional Programming patterns are possible and even quite natural in JS</li>
-              <li>These patterns usually lead to better, simpler code</li>
+              <li>JavaScript is not considered the <strong style="color:LightSkyBlue">Most Functional Programming Language</strong> in use</li>
+              <li>But there's no universally aggreed-upon definition of <strong style="color:LightSkyBlue">which</strong> language is...</li>
+              <li>Functional Programming patterns are <strong style="color:LightSkyBlue">possible</strong> and even quite <strong style="color:LightSkyBlue">natural</strong> in JS</li>
+              <li>These patterns usually lead to <strong style="color:LightSkyBlue">simpler</strong> - and <strong style="color:LightSkyBlue">better</strong> code</li>
             </ul>
           </section>
           <section>
@@ -428,24 +435,33 @@ function getEntry(id) {
             <img src="assets/callbacks.jpg"></img>
             <div>&nbsp;</div>
             <ul>
-              <li>Callbacks are cool unless you abuse them</li>
-              <li>Avoid nesting them more than one level deep</li>
+              <li><strong style="color:LightSkyBlue">Callbacks</strong> are cool unless you abuse them</li>
+              <li>Avoid nesting them more than <strong style="color:LightSkyBlue">one</strong> level deep</li>
             </ul>
           </section>
           <section>
             <h3>Practical Advices</h3>
             <div>&nbsp;</div>
             <ul>
-              <li>If your problem requires more nesting, try more functional approach with libraries like <strong style="color:LightSkyBlue">async</strong></li>
+              <li>If your problem requires more nesting, try more <strong style="color:LightSkyBlue">functional</strong> approach with libraries like <strong style="color:LightSkyBlue">async</strong></li>
               <li>Many problems can be nicely expressed with <strong style="color:LightSkyBlue">Promises</strong> - don't be afraid to try!</li>
             </ul>
           </section>
         </section>
         <section>
           <section>
-            <h2>Thank You</h2>
+            <h2><strong style="color:LightSkyBlue">Thank You</strong></h2>
             <div>&nbsp;</div>
             <p>Any Questions?</p>
+          </section>
+        </section>
+        <section>
+          <section>
+            <h2>Info, feedback</h2>
+            <div>&nbsp;</div>
+            <ul>
+              <li>Meet with us on Facebook: <a href="https://www.facebook.com/Hack.your.Career">https://www.facebook.com/Hack.your.Career</a></li>
+            </ul>
           </section>
         </section>
       </div>
