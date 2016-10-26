@@ -388,6 +388,7 @@ request(searchUrl) //1: Promise(response)
     .then( addEntry(IDs[4]))     //6: Promise([e0, e1, e2, e3, e4])
 }) 
 .then(printBlogEntries) //7
+.catch(err => handleError(err)); //8
             </code></pre>
           </section>
           <section>
@@ -412,6 +413,15 @@ function getEntry(id) {
     .then(response => extractEntry(response)); //2: Promise(entry)
 }
 
+            </code></pre>
+          </section>
+          <section>
+            <h3>Implementation, cd</h3>
+            <pre><code class="javascript" data-trim data-noescape>
+//Trivial
+function printBlogEntries(entries) {
+    sendToPrinter(entries);
+}
             </code></pre>
           </section>
         </section>
