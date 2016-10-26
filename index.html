@@ -29,6 +29,7 @@
         <section data-background="assets/hack_your_career-dim.png" data-state="dim-animation" data-background-transition="none">
             <h1>Asynchronous Patterns in JavaScript</h1>
             <p>by Tomasz Smelcerz, 2016</p>
+            <p>https://github.com/Tomasz-Smelcerz/async-patterns-with-js.git</p>
             <small><a href="tsmelcerz@gmail.com">tsmelcerz@gmail.com</a></small>
         </section>
         <section>
@@ -50,18 +51,18 @@
           <section>
             <h3>Functional?</h3>
             <ul>
-              <li>Functional roots: Function is a first class object in JS</li>
+              <li>Functional roots: <strong style="color:LightSkyBlue">Function</strong> is a first class object in JS</li>
               <li>You can easily leverage many functional patterns</li>
-              <li>Latest changes in the language (es6) promote FP style (e.g: const, fat arrow) </li>
+              <li>Latest changes in the language (<strong style="color:LightSkyBlue">es6</strong>) promote FP style (e.g: <strong style="color:LightSkyBlue">const</strong>, <strong style="color:LightSkyBlue">fat arrow</strong>) </li>
             </ul>
           </section>
           <section>
             <h3>Reactive?</h3>
             <ul>
               <li>We build Reactive systems because they <strong>scale better</strong></li>
-              <li><strong>Node.js</strong> provides a scalable server-side environment for JS code</li>
+              <li><strong style="color:LightSkyBlue">Node.js</strong> provides a scalable server-side environment for JS code</li>
               <li>A serious competitor for established platforms (JVM, .NET, others)</li>
-              <li>Driven by the mighty <b>Event Loop</b> - an execution model for processing asynchronous events</li>
+              <li>Driven by the mighty <strong style="color:LightSkyBlue">Event Loop</strong> - an execution model for processing asynchronous events</li>
             </ul>
           </section>
           <section>
@@ -80,10 +81,11 @@
           </section>
           <section>
             <h2>The Problem</h2>
+            <div>&nbsp;</div>
             <ul>
-            <li>There's a REST API of a blog platform. Imagine you want to fetch 5 recent entries of your favourite blogger.</li>
-            <li>The <i>search</i> endpoint returns only IDs, blog entries have to be fetched one by one using IDs found.</li>
-            <li>Additional restriction: We will make requests one after another.</li>
+              <li>There's a <strong style="color:LightSkyBlue">REST API</strong> of a blog platform. Imagine you want to fetch 5 recent entries of your favourite blogger.</li>
+              <li>The <strong style="color:LightSkyBlue">search</strong> endpoint returns only IDs, blog entries have to be fetched one by one using IDs found.</li>
+              <li>Additional restriction: We will make requests one after another.</li>
             </ul>
           </section>
           <section>
@@ -336,8 +338,8 @@ async.waterfall(steps); //2
             <h3>Promises in JavaScript</h3>
             </br>
             <ul>
-              <li>Recently added to JS specs (es6)</li>
-              <li>Available before due to libraries (bluebird / q)</li>
+              <li>Recently added to JS specs (<strong style="color:LightSkyBlue">es6</strong>)</li>
+              <li>Available before due to libraries (<strong style="color:LightSkyBlue">bluebird</strong> / <strong style="color:LightSkyBlue">q</strong>)</li>
               <li>Libs still offer nice features that are missing in built-in Promise object</li>
                 <ul>
                   <li>filter</li>
