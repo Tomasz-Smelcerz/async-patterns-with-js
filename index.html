@@ -1,0 +1,470 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>reveal.js</title>
+
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/black-future.css">
+
+    <!-- Theme used for syntax highlighting of code -->
+    <link rel="stylesheet" href="lib/css/zenburn.css">
+
+    <!-- Printing and PDF exports -->
+    <script>
+      var link = document.createElement( 'link' );
+      link.rel = 'stylesheet';
+      link.type = 'text/css';
+      link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+      document.getElementsByTagName( 'head' )[0].appendChild( link );
+    </script>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section data-background="assets/hack_your_career.jpg">
+        </section>
+        <section data-background="assets/hack_your_career-dim.png" data-state="dim-animation" data-background-transition="none">
+            <h1>Asynchronous Patterns in JavaScript</h1>
+            <p>by Tomasz Smelcerz, 2016</p>
+            <small><a href="tsmelcerz@gmail.com">tsmelcerz@gmail.com</a></small>
+        </section>
+        <section>
+          <h2>Agenda</h2>
+          <div>&nbsp;</div>
+          <ul>
+            <li>Functional? Reactive? JavaScript?</li>
+            <li>The Problem To Solve</li>
+            <li>Doom And Hell In Callback Land</li>
+            <li>Functional Programming To The Rescue</li>
+            <li>I Can Promise, You Can Promise, Everybody!</li>
+            <li>Final Words</li>
+          </ul>
+        </section>
+        <section>
+          <section data-background-size="50%" data-background="assets/question-mark-sign.png">
+            <h2>Functional? Reactive? JavaScript?</h2>
+          </section>
+          <section>
+            <h3>Functional?</h3>
+            <ul>
+              <li>Functional roots: Function is a first class object in JS</li>
+              <li>You can easily leverage many functional patterns</li>
+              <li>Latest changes in the language (es6) promote FP style (e.g: const, fat arrow) </li>
+            </ul>
+          </section>
+          <section>
+            <h3>Reactive?</h3>
+            <ul>
+              <li>We build Reactive systems because they <strong>scale better</strong></li>
+              <li><strong>Node.js</strong> provides a scalable server-side environment for JS code</li>
+              <li>A serious competitor for established platforms (JVM, .NET, others)</li>
+              <li>Driven by the mighty <b>Event Loop</b> - an execution model for processing asynchronous events</li>
+            </ul>
+          </section>
+          <section>
+            <h3>Event Loop</h3>
+            <ul>
+              <li>Executes Handlers registered by our code</li>
+              <li>Provides single-threaded processing model</li>
+              <li>Uses non-blocking API to perform time-consuming operations (I/O, scheduling)</li>
+              <li>Is an example of Reactive design: responsive*, elastic, message-driven <small>(* if not blocked)</small></li>
+            </ul>
+          </section>
+        </section>
+        <section>
+          <section data-background-size="100%" data-background="assets/Tower_of_Hanoi.png">
+            <h2>The Problem To Solve</h2>
+          </section>
+          <section>
+            <h2>The Problem</h2>
+            <ul>
+            <li>There's a REST API of a blog platform. Imagine you want to fetch 5 recent entries of your favourite blogger.</li>
+            <li>The <i>search</i> endpoint returns only IDs, blog entries have to be fetched one by one using IDs found.</li>
+            <li>Additional restriction: We will make requests one after another.</li>
+            </ul>
+          </section>
+          <section>
+            <h2>"Nice To Have" Solution</h2>
+            <pre><code class="javascript" data-trim data-noescape>
+const req = require('request-sync');
+
+const blogUrl = 'http://acmeblog.org/goodblogger/';
+const entries = [];
+
+const searchResponse = req('http://acmeblog.org/search/...') //1
+const IDs = extractIDs(searchResponse);
+
+entries.push(extractEntry(<mark>req(blogUrl + IDs[0])</mark>)); //2
+entries.push(<mark>extractEntry</mark>(req(blogUrl + IDs[1]))); //3
+<mark>entries.push</mark>(extractEntry(req(blogUrl + IDs[2]))); //4
+entries.push(extractEntry(req(blogUrl + IDs[3]))); //5
+entries.push(extractEntry(req(blogUrl + IDs[4]))); //6
+
+printBlogs(entries);
+            </code></pre>
+          </section>
+        </section>
+        <section>
+          <section data-background-size="80%" data-background="assets/doom.png">                   
+            <h2>Doom And Hell In Callback Land</h2>
+          </section>
+          <section>
+            <h2>Meet The Callback</h2>
+            <pre><code class="javascript" data-trim data-noescape>       
+const request = require('request');
+
+request('http://www.google.com', callback); //1 
+console.log('Is the HTML ready?'); //2
+            </code></pre>
+            <pre class="fragment"><code class="javascript" data-trim data-noescape>       
+function callback(error, response) {
+    if(error) {
+        return handleError(error);
+    }
+
+    if (response.statusCode == 200) {
+        process(response) // Process the HTML
+    }
+};
+            </code></pre>
+          </section>
+          <section>
+            <h2>The Callback, Inlined</h2>
+            <pre><code class="javascript" data-trim data-noescape>       
+const request = require('request');
+
+request('http://www.google.com', <mark>function (error, response) {
+    if(error) {
+        return handleError(error);
+    }
+
+    if (response.statusCode == 200) {
+        process(response) // Process the HTML
+    }
+}</mark>);
+            </code></pre>
+          </section>
+
+          <section>
+            <h2>Callback-based Solution</h2>
+            <pre><code class="javascript" data-trim data-noescape>
+const request = require('request');
+const searchUrl = 'http://acmeblog.org/search/...';
+
+//request #1 (search)
+request(searchUrl, function (error, response) {
+    const IDs = extractIDs(response);
+    const entries = [];
+    const blogUrl = 'http://acmeblog.org/goodblogger/';
+
+    //request #2 (first blog entry)
+    request(blogUrl + IDs[0], function (error, response) {
+        entries.push(extractEntry(response));
+
+        //request #3 (second blog entry)
+        request(blogUrl + IDs[1], function (error, response) {
+            entries.push(extractEntry(response));
+            </code></pre>
+          </section>
+          <section>
+            <h2>Callback-based Solution (all)</h2>
+            <pre><small>
+const request = require('request');
+const searchUrl = 'http://acmeblog.org/search/...';
+
+request(searchUrl, function (error, response) { //1
+    const IDs = extractIDs(response);
+    const entries = [];
+    const blogUrl = 'http://acmeblog.org/goodblogger/';
+
+    request(blogUrl + IDs[0], function (error, response) { //2
+        entries.push(extractEntry(response));
+
+        request(blogUrl + IDs[1], function (error, response) { //3
+            entries.push(extractEntry(response));
+
+            request(blogUrl + IDs[2], function (error, response) { //4
+                entries.push(extractEntry(response));
+
+                request(blogUrl + IDs[3], function (error, response) { //5
+                    entries.push(extractEntry(response));
+
+                    request(blogUrl + IDs[4], function (error, response) { //6
+                        printBlogs(blogEntries);
+                    });
+                });
+            });
+        });
+    });
+});
+            </small></pre>
+            <span class="fragment">
+              <div>What we've endend with is called</div>
+              <div><strong>Pyramid of Doom / Callback Hell</strong></div>
+            </span>
+          </section>
+          <section>
+            <h2>Pyramid of Doom / Callback Hell</h3>
+            <div class="fragment">What should the structure of our code depend on?</div>
+            </br>
+            <ul>
+              <li class="fragment">business domain</li>
+              <li class="fragment">our ability to modularize it so it's readable and maintainable</li>
+              <li class="fragment">NOT on the technical, low-level factors of the API we're using</li>
+              <li class="fragment">In this case naive use of the callback-based API dictates structure of our code!</li>
+            </ul>
+          </section>
+        </section>
+        <section>
+          <section data-background-size="100%" data-background="assets/lambda.png">
+            <h2>Functional Programming to the rescue</h2>
+          </section>
+          <section>
+            <h3>The problem, revisited</h3>
+            <div >What if we try more <i>functional</i> approach?</div>
+            <pre><code class="javascript" data-trim data-noescape>       
+const magicLib = require('magicLib'); //1
+
+const steps = [
+    fetchIds,
+    fetchBlogEntry(0),
+    fetchBlogEntry(1),
+    fetchBlogEntry(2),
+    fetchBlogEntry(3),
+    fetchBlogEntry(4),
+    printBlogEntries
+];
+
+magicLib.execute(steps); //2
+            </code></pre>
+          </section>
+          <section>
+            <h3>First step...</h3>
+            <pre><code class="javascript" data-trim data-noescape>       
+function fetchIds(done) {
+    const searchUrl = 'http://acmeblog.org/search/...';
+    request(searchUrl, function (error, response) { //1
+        const IDs = extractIDs(response); //2
+        //args: error, firstArg, secondArg, ...
+        done(null, IDs, []); //3
+    });
+}
+            </code></pre>
+          </section>
+          <section>
+            <h3>Next steps...</h3>
+            <pre><code class="javascript" data-trim data-noescape>       
+function fetchBlogEntry(entryIndex) {
+
+    return function(IDs, entries, done) { //1
+
+        const blogUrl = 'http://acmeblog.org/goodblogger/' +
+            IDs[entryIndex];
+
+        request(blogUrl, function (error, response) { //2
+            entries[entryIndex] = extractEntry(response); //3
+            //args: error, firstArg, secondArg, ...
+            done(null, IDs, entries); //4
+        });
+    }
+}
+
+            </code></pre>
+          </section>
+          <section>
+            <h3>Last step</h3>
+            <pre><code class="javascript" data-trim data-noescape>       
+function printBlogEntries(IDs, entries, done) {
+    sendToPrinter(entries);
+    done(); //1
+}
+            </code></pre>
+          </section>
+          <section>
+            <h3>The secret, revealed</h3>
+            <span>"Magic" library is called <strong style="color:LightSkyBlue">async</strong></span>
+            <span class="fragment">http://caolan.github.io/async</span>
+            <pre class="fragment"><code class="javascript" data-trim data-noescape>       
+const async = require('async'); //1
+
+const steps = [
+    fetchIds,
+    fetchBlogEntry(0),
+    fetchBlogEntry(1),
+    fetchBlogEntry(2),
+    fetchBlogEntry(3),
+    fetchBlogEntry(4),
+    printBlogEntries
+];
+
+async.waterfall(steps); //2
+            </code></pre>
+          </section>
+          <section>
+            <h3>Functional approach to... async</h3>
+            <div><strong style="color:LightSkyBlue">async</strong> library provides functions like:</div>
+            </br>
+            <ul>
+              <li>map</li>
+              <li>reduce</li>
+              <li>waterfall</li>
+              <li>parallel</li>
+              <li>retry</li>
+              <li>each</li>
+            </ul>
+
+            <p>&nbsp;</p>
+            <div class="fragment">and many more!</div>
+          </section>
+        </section>
+        <section>
+          <section data-background-size="100%" data-background="assets/matrix.png">
+            <h3>I can Promise, You can Promise, Everybody!</h3>
+          </section>
+          <section>
+            <h3>What is a <strong style="color:LightSkyBlue">Promise</strong>?</h3>
+            </br>
+            <ul>
+              <li>Similar to Scala's Future</li>
+              <li>A container for a value which may be available now or sometime in the future</li>
+            </ul>
+          </section>
+          <section>
+            <h3>Promises in JavaScript</h3>
+            </br>
+            <ul>
+              <li>Recently added to JS specs (es6)</li>
+              <li>Available before due to libraries (bluebird / q)</li>
+              <li>Libs still offer nice features that are missing in built-in Promise object</li>
+                <ul>
+                  <li>filter</li>
+                  <li>map</li>
+                  <li>reduce</li>
+                  <li>join (join results of several Promises)</li>
+                  <li>spread (multi-arg handlers)</li>
+                  <li>promisify/promisifyAll</li>
+                </ul>
+            </ul>
+          </section>
+          <section>
+            <h3>How to use them</h3>
+            </br>
+            <ul>
+              <li>"Promisify" your existing callback-based API (single call)</li>
+              <li>API functions now return a <strong style="color:LightSkyBlue">Promise</strong> instead of taking a callback</li>
+              <li>You can chain them using <strong style="color:LightSkyBlue">then()</strong> method</li>
+              <ul>
+                <li><strong style="color:LightSkyBlue">then(func)</strong> takes the result of a promise and invokes passed <strong>func</strong> with the result.</li>
+                <li>Whatever is returned by the <strong>func</strong> passed into <strong style="color:LightSkyBlue">then</strong>, is returned as a new Promise. You can also return new Promise to defer the execution further.</li>
+              </ul>
+              <li>Error handling is provided by <strong style="color:LightSkyBlue">catch()</strong> method</li>
+            </ul>
+          </section>
+          <section>
+            <h3>Example</h3>
+            <pre><code class="javascript" data-trim data-noescape>       
+const request = Promise.promisify(require("request")); //a
+const searchUrl = 'http://acmeblog.org/search/...';
+
+request(searchUrl) //1: Promise(response)
+.then(response => {
+    const IDs = extractIDs(response); //b
+    return addEntry(IDs[0])<mark>([])</mark>  //2: Promise([e0])
+    .then( addEntry(IDs[1]))     //3: Promise([e0, e1])
+    .then( addEntry(IDs[2]))     //4: Promise([e0, e1, e2])
+    .then( addEntry(IDs[3]))     //5: Promise([e0, e1, e2, e3])
+    .then( addEntry(IDs[4]))     //6: Promise([e0, e1, e2, e3, e4])
+}) 
+.then(printBlogEntries) //7
+            </code></pre>
+          </section>
+          <section>
+            <h3>Implementation</h3>
+            <pre><code class="javascript" data-trim data-noescape>
+//returns a one-arg function that returns a Promise
+function addEntry(id) {
+    return function(entries) { //Purely Functional :)
+
+       return getEntry(id) //1: Promise(entry)
+       .then(e => entries.concat([e])); //2: Promise([entries + e])
+    }
+}
+
+            </code></pre>
+            <pre class="fragment"><code class="javascript" data-trim data-noescape>
+const blogUrl = 'http://acmeblog.org/goodblogger/';
+
+//returns a Promise!
+function getEntry(id) {
+    return request(blogUrl + id) //1: Promise(response)
+    .then(response => extractEntry(response)); //2: Promise(entry)
+}
+
+            </code></pre>
+          </section>
+        </section>
+        <section>
+          <section>
+            <h2>Final Words</h2>
+            <img src="assets/javascript.jpg"></img>
+          </section>
+          <section>
+            <h3>Things we've learned so far</h3>
+            <div>&nbsp;</div>
+            <ul>
+              <li>JavaScript is not considered the <strong>most</strong> Functional Programming Language in use</li>
+              <li>But there's no universally aggreed-upon definition of which language is...</li>
+              <li>Functional Programming patterns are possible and even quite natural in JS</li>
+              <li>These patterns usually lead to better, simpler code</li>
+            </ul>
+          </section>
+          <section>
+            <h3>Practical Advices</h3>
+            <img src="assets/callbacks.jpg"></img>
+            <div>&nbsp;</div>
+            <ul>
+              <li>Callbacks are cool unless you abuse them</li>
+              <li>Avoid nesting them more than one level deep</li>
+            </ul>
+          </section>
+          <section>
+            <h3>Practical Advices</h3>
+            <div>&nbsp;</div>
+            <ul>
+              <li>If your problem requires more nesting, try more functional approach with libraries like <strong style="color:LightSkyBlue">async</strong></li>
+              <li>Many problems can be nicely expressed with <strong style="color:LightSkyBlue">Promises</strong> - don't be afraid to try!</li>
+            </ul>
+          </section>
+        </section>
+        <section>
+          <section>
+            <h2>Thank You</h2>
+            <div>&nbsp;</div>
+            <p>Any Questions?</p>
+          </section>
+        </section>
+      </div>
+    </div>
+
+    <script src="lib/js/head.min.js"></script>
+    <script src="js/reveal.js"></script>
+
+    <script>
+      // More info https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        history: true,
+
+        // More info https://github.com/hakimel/reveal.js#dependencies
+        dependencies: [
+          { src: 'plugin/markdown/marked.js' },
+          { src: 'plugin/markdown/markdown.js' },
+          { src: 'plugin/notes/notes.js', async: true },
+          { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+        ]
+      });
+    </script>
+  </body>
+</html>
